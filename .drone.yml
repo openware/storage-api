@@ -1,0 +1,37 @@
+---
+kind: pipeline
+type: docker
+name: Storage
+
+concurrency:
+  limit: 2
+
+steps:
+  - name: Save Git SHA
+    image: alpine:3
+    pull: if-not-exists
+    commands:
+      - echo '${DRONE_SOURCE_BRANCH//\//-},${DRONE_COMMIT:0:7}' > .tags
+
+  - name: Docker build SHA
+    image: plugins/docker:20
+    pull: if-not-exists
+    settings:
+      username:
+        from_secret: quay_username
+      password:
+        from_secret: quay_password
+      repo: quay.io/openware/storage-api
+      registry: quay.io
+      cache_from:
+        - "quay.io/openware/storage-api:stable-ow"
+        - 'quay.io/openware/storage-api:${DRONE_SOURCE_BRANCH//\//-}'
+
+trigger:
+  event:
+    - push
+  branch:
+    - master
+    - stable/*
+    - feature/*
+    - fix/*
