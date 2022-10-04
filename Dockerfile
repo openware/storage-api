@@ -12,6 +12,10 @@ RUN npm ci
 RUN npm run build
 
 FROM node:lts-alpine
+
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nextjs -u 1001 -G nodejs
+
 RUN npm install -g pm2
 WORKDIR /app
 
@@ -25,6 +29,8 @@ COPY migrations migrations
 COPY ecosystem.config.js package.json ./
 COPY --from=0 /app/node_modules node_modules
 COPY --from=1 /app/dist dist
+
+USER nextjs
 
 EXPOSE 5000
 CMD ["pm2-runtime", "ecosystem.config.js"]
